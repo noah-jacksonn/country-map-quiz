@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "generate:map": "node scripts/generate-map.mjs",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",

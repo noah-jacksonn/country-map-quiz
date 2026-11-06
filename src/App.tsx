@@ -4,7 +4,7 @@ import { Check, ChevronRight, Clock3, History, Infinity as InfinityIcon, Palette
 import { QuizMap } from './components/QuizMap';
 import { PointerPrompt } from './components/PointerPrompt';
 import { countryFlag, countryName } from './data/countries';
-import { accuracy, answerCountry, archive, formatTime, isComplete, newGame, readProfile, STORAGE_KEY } from './game';
+import { accuracy, answerCountry, archive, attemptMistakes, formatTime, isComplete, newGame, readProfile, roundMistakes, STORAGE_KEY } from './game';
 import type { Game } from './game';
 import { playAnswer } from './sound';
 import { themes } from './themes';
@@ -39,6 +39,7 @@ export default function App() {
   const complete = isComplete(game);
   const target = game.order[game.answers.length];
   const score = accuracy(game.answers.length, game.guesses);
+  const currentMistakes = roundMistakes(game);
 
   useEffect(() => { setTheme(mapTheme === 'paper' ? 'light' : 'dark'); }, [mapTheme, setTheme]);
   useEffect(() => {
@@ -98,7 +99,7 @@ export default function App() {
         {game.mode === 'quiz' && <><span className="toolbar-divider" /><span className="timer" title="Time spent on this round"><Clock3 size={14} />{formatTime(game.elapsed)}</span></>}
       </div>
       <nav className="actions surface" aria-label="Game options">
-        <button className={`practice-button${game.mode === 'practice' ? ' selected' : ''}`} aria-label="Free practice" title="Practice countries you know" onClick={() => setModal('practice')}><InfinityIcon size={18} /></button>
+        <button className={`practice-button${game.mode === 'practice' ? ' selected' : ''}`} aria-label="Practice mistakes" title="Practice countries you missed" onClick={() => setModal('practice')}><InfinityIcon size={18} /></button>
         <button className="icon-button" aria-label="Choose theme" title="Choose theme" popoverTarget="theme-picker"><Palette size={17} /></button>
         <button className="icon-button" aria-label="Past attempts" title="Past attempts" onClick={() => setModal('history')}><History size={18} /></button>
         <button className="icon-button" aria-label={profile.sound ? 'Mute sound effects' : 'Unmute sound effects'} title={profile.sound ? 'Mute sound effects' : 'Unmute sound effects'} aria-pressed={!profile.sound} onClick={() => setProfile(previous => ({ ...previous, sound: !previous.sound }))}>{profile.sound ? <Volume2 size={18} /> : <VolumeX size={18} />}</button>
@@ -122,21 +123,21 @@ export default function App() {
     {complete && !modal && <button className="finish-button surface" title="View round results" onClick={() => setModal('complete')}>Round complete <ChevronRight size={17} /></button>}
 
     {modal === 'practice' && <Modal title="Practice" onClose={() => setModal(null)}>
-      <p className="modal-description">Countries you know. No timer or score.</p>
-      <div className="practice-count"><strong>{profile.known.length}</strong><span>{profile.known.length === 1 ? 'country ready' : 'countries ready'}</span></div>
-      {profile.known.length ? <><div className="country-list">{[...profile.known].sort((a, b) => countryName(a).localeCompare(countryName(b))).map(id => <span key={id}>{countryName(id)}</span>)}</div>
-        <button className="primary-button" title="Practice without a timer or score" onClick={() => start('practice', profile.known)}>Start practicing <ChevronRight size={17} /></button>
+      <p className="modal-description">{profile.mistakes.length ? 'Countries you missed. No timer or score.' : 'No mistakes yet.'}</p>
+      {profile.mistakes.length > 0 && <div className="practice-count"><strong>{profile.mistakes.length}</strong><span>{profile.mistakes.length === 1 ? 'country ready' : 'countries ready'}</span></div>}
+      {profile.mistakes.length ? <><div className="country-list">{[...profile.mistakes].sort((a, b) => countryName(a).localeCompare(countryName(b))).map(id => <span key={id}>{countryName(id)}</span>)}</div>
+        <button className="primary-button" title="Practice your mistakes without a timer or score" onClick={() => start('practice', profile.mistakes)}>Start practicing <ChevronRight size={17} /></button>
       </> : <><button className="primary-button" title="Return to your current round" onClick={() => setModal(null)}>Back to the map <ChevronRight size={17} /></button></>}
       {game.mode === 'practice' && <button className="text-button" title="Start a quiz with all 48 countries" onClick={() => start('quiz')}>Back to the full quiz</button>}
     </Modal>}
 
     {modal === 'history' && <Modal title="Past attempts" onClose={() => setModal(null)}>
       {!profile.history.length ? <div className="empty-history"><History size={27} /><p>Fresh start.</p></div> : <div className="history-list">{profile.history.slice(0, historyCount).map(attempt => {
-        const known = attempt.answers.filter(a => !a.assisted).map(a => a.id);
+        const missed = attemptMistakes(attempt);
         return <div className="history-row" key={attempt.id}>
           <span className="history-score" title="Accuracy: countries found ÷ total guesses">{accuracy(attempt.answers.length, attempt.guesses)}<small>%</small></span>
           <div className="history-detail"><strong>{attempt.answers.length} / {attempt.total} countries <span>{attempt.complete ? 'Complete' : 'Partial'}</span></strong><p>{new Date(attempt.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {new Date(attempt.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · {formatTime(attempt.elapsed)}</p></div>
-          <button className="icon-button" disabled={!known.length} aria-label={`Practice ${known.length} countries from this attempt`} title={`Practice ${known.length} countries`} onClick={() => start('practice', known)}><InfinityIcon size={20} /></button>
+          <button className="icon-button" disabled={!missed.length} aria-label={`Practice ${missed.length} missed countries from this attempt`} title={missed.length ? `Practice ${missed.length} missed countries` : 'No mistakes in this attempt'} onClick={() => start('practice', missed)}><InfinityIcon size={20} /></button>
         </div>;
       })}{profile.history.length > historyCount && <button className="text-button" title="Show 30 more attempts" onClick={() => setHistoryCount(count => count + 30)}>Show more</button>}</div>}
     </Modal>}
@@ -150,7 +151,7 @@ export default function App() {
       <p className="modal-description">{game.order.length} countries.</p>
       {game.mode === 'quiz' && <div className="result-stats"><div title="Countries found ÷ total guesses"><strong>{score}<small>%</small></strong><span>Accuracy</span></div><div title="Countries found without a wrong guess"><strong>{game.answers.filter(a => a.misses === 0).length}</strong><span>First try</span></div><div title="Time spent on this round"><strong>{formatTime(game.elapsed)}</strong><span>Time</span></div></div>}
       <button className="primary-button" title={game.mode === 'practice' ? 'Practice these countries again' : 'Start a fresh 48-country quiz'} onClick={() => start(game.mode, game.mode === 'practice' ? game.order : undefined)}>{game.mode === 'practice' ? 'Keep practicing' : 'Play again'} <RotateCcw size={17} /></button>
-      {game.mode === 'quiz' && profile.known.length > 0 && <button className="text-button" title="Practice countries found without a reveal" onClick={() => start('practice', profile.known)}>Practice what you know</button>}
+      {game.mode === 'quiz' && currentMistakes.length > 0 && <button className="text-button" title="Practice countries you missed in this round" onClick={() => start('practice', currentMistakes)}>Practice mistakes</button>}
       <button className="text-button subtle" title="Return to your completed map" onClick={() => setModal(null)}>Look at your map</button>
     </Modal>}
   </main>;
