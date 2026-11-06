@@ -1,0 +1,35 @@
+# Country map quiz
+
+A fullscreen, browser-local Asia quiz with the same 48-country selection as [Seterra's Asia quiz](https://www.geoguessr.com/vgp/3167).
+
+## Run
+
+`npm install` then `npm run dev`. Open http://localhost:5197.
+
+`npm run build` makes a static production build in `dist/`. `npm run preview` serves that build. No backend, credentials, or accounts are needed.
+
+## Hosting
+
+ChatGPT Sites hosts the static `dist/` build. `.openai/hosting.json` links this checkout to its Site. Publishing uses the Sites workflow to build, save the matching source revision, and deploy that revision. The Site starts private; its audience is managed separately in Sites.
+
+Game data stays in the visitor's browser. Moving to a new hostname does not automatically copy history from localhost, and progress does not sync across devices. No hosted database or file-storage binding is required.
+
+## Play
+
+- Hover to highlight, click to answer. The prompt follows the pointer; on touch it stays near the bottom.
+- Three incorrect guesses highlight the answer with a gold pulse. Wrong clicks briefly flash the country red and identify it in the cursor prompt, without a separate map callout.
+- Correct answers retain a small, muted label fitted inside the country. Labels scale with the map; assisted answers use a lighter shade of the same green.
+- Accuracy is completed countries divided by total guesses. Water, completed countries, and countries outside the current practice set don't count as guesses.
+- Practice includes countries found without a reveal, including second or third guesses. Practice is unscored and can be repeated freely. Each past attempt can also launch practice for its own unassisted answers.
+- The current round, known countries, theme and mute preferences, and all completed or interrupted quizzes are stored in localStorage under `country-map-quiz.v1`.
+- The palette button switches between Ocean, Forest, Dusk, and Paper; the chosen theme is saved locally. Country borders use brighter strokes on dark themes and darker strokes on Paper. The cursor prompt includes the target country flag.
+- Scroll or pinch to zoom, drag to move, or use the bottom-right controls. The initial and reset view is zoomed to 120%. Country shapes also support Tab and Enter/Space.
+- Short synthesized right/wrong sounds are enabled by default. The speaker button mutes them. There is no speech.
+
+## Sources and development
+
+Geography is public-domain [Natural Earth data redistributed by world-atlas](https://github.com/topojson/world-atlas), projected ahead of time with D3. `npm run generate:map` regenerates `src/data/map.json` from the retained source package. Label positions and sizes are fitted to each country polygon at generation time. The browser does not load a mapping library or fetch map tiles. Selection follows the referenced game; the dataset provides the boundaries.
+
+Cursor SVGs are copied unchanged from Harmony's landing-page `public/cursors` folder. Water uses the rounded arrow, countries use the pointing hand, and dragging uses the closed hand.
+
+The shared `@noah/segtest` package is included as a committed vendor archive. Vite provides its development-only `/api/debug/segtest` route and the app has a `next-themes` provider. No comparison is active. Follow `/Users/noahjackson/segtest/src/DebugSegtestPanel.tsx` when adding one.
