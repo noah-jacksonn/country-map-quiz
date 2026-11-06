@@ -1,8 +1,8 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { Minus, Plus, Scan } from 'lucide-react';
+import { Check, Minus, Plus, Scan } from 'lucide-react';
 import geography from '../data/map.json';
-import { countries, countryName } from '../data/countries';
+import { countries, countryFlag, countryName } from '../data/countries';
 import type { Answer } from '../game';
 
 type Point = { x: number; y: number };
@@ -17,6 +17,8 @@ const bound = (value: number, min: number, max: number) => Math.max(min, Math.mi
 // Center the playable region below Russia, leaving its northern/eastern extent offscreen.
 const focus = { x: 640, y: 615 };
 const origin = { x: 0, y: 0, zoom: 1.5 };
+const minimumLabelSize = 10;
+const maximumLabelSize = 12;
 
 export const QuizMap = memo(function QuizMap({ answers, included, revealed, flash, onGuess, wrong }: Props) {
   const ref = useRef<SVGSVGElement>(null);
@@ -32,6 +34,9 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
   const scale = base * camera.zoom;
   const answered = new Map(answers.map(answer => [answer.id, answer]));
   const includeSet = new Set(included);
+  const labeledCountries = geography.countries.filter(country =>
+    answered.has(country.id) && country.label.fontSize * scale >= minimumLabelSize);
+  const hoveredAnswer = hovered && answered.has(hovered) && !dragging && !wrong && !flash ? hovered : null;
 
   useEffect(() => {
     const observer = new ResizeObserver(([entry]) => setSize({ width: entry.contentRect.width, height: entry.contentRect.height }));
@@ -126,7 +131,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
       viewBox={`0 0 ${size.width} ${size.height}`} aria-label="Interactive map of Asia"
       onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}
       onPointerOver={event => setHovered(countryAt(event.target))} onPointerLeave={() => setHovered(null)}>
-      <defs>{geography.countries.filter(country => answered.has(country.id)).map(country => <clipPath id={`label-${country.id}`} key={country.id}><path d={country.path} /></clipPath>)}</defs>
+      <defs>{labeledCountries.map(country => <clipPath id={`label-${country.id}`} key={country.id}><path d={country.path} /></clipPath>)}</defs>
       <g transform={`translate(${size.width / 2 + camera.x} ${size.height / 2 + camera.y}) scale(${scale}) translate(${-focus.x} ${-focus.y})`}>
         <path d={geography.context} className="context-land" />
         {geography.countries.map(country => {
@@ -137,9 +142,9 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
             tabIndex={active && !answer ? 0 : -1} role="button" aria-label={countryName(country.id)} aria-disabled={!active || !!answer}
             onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onGuess(country.id); } }} />;
         })}
-        {geography.countries.filter(country => answered.has(country.id)).map(country =>
+        {labeledCountries.map(country =>
           <text key={country.id} className="country-label" x={country.label.x} y={country.label.y}
-            fontSize={country.label.fontSize} textAnchor="middle" dominantBaseline="central"
+            fontSize={Math.min(country.label.fontSize, maximumLabelSize / scale)} textAnchor="middle" dominantBaseline="central"
             clipPath={`url(#label-${country.id})`} aria-hidden="true">{countryName(country.id)}</text>)}
       </g>
       <g className="small-countries">
@@ -152,6 +157,10 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
         })}
       </g>
     </svg>
+    {hoveredAnswer && <div className="found-feedback" aria-label={`Found country: ${countryName(hoveredAnswer)}`}>
+      <Check className="found-feedback-icon" size={18} aria-hidden="true" />
+      <span className="country-flag" aria-hidden="true">{countryFlag(hoveredAnswer)}</span><strong>{countryName(hoveredAnswer)}</strong>
+    </div>}
     <div className="map-controls surface" aria-label="Map controls">
       <button aria-label="Zoom in" title="Zoom in" disabled={camera.zoom >= 8} onClick={() => zoomAt(1.4, { x: size.width / 2, y: size.height / 2 })}><Plus size={18} /></button>
       <button aria-label="Zoom out" title="Zoom out" disabled={camera.zoom <= 0.8} onClick={() => zoomAt(1 / 1.4, { x: size.width / 2, y: size.height / 2 })}><Minus size={18} /></button>

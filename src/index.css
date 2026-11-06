@@ -10,7 +10,7 @@
 :root, [data-theme='ocean'] {
   --prompt-background: #f4f8fa; --prompt-ink: #173442; --prompt-border: #ffffff;
   --ocean: #102b3b; --land: #284b5a; --land-context: #1a3846; --border: #a7cbd6;
-  --hover: #4889a0; --correct: #467c71; --assisted: #3b605b; --label: #b0cdc4;
+  --hover: #4889a0; --correct: #79b99b; --assisted: #69a58e; --label: #244c3d;
   --ink: #d2e0e6; --muted: #8ba4b0; --accent: #8dc9d1;
   --panel: #102632b3; --panel-solid: #173441; --line: #9eb8c224; --control-hover: #c2e0ee14;
   --button: #91bcc4; --button-ink: #15333c; --wrong: #a75560; --wrong-text: #edabb2;
@@ -18,7 +18,7 @@
 [data-theme='forest'] {
   --prompt-background: #f4f5e9; --prompt-ink: #233d30; --prompt-border: #ffffff;
   --ocean: #182c29; --land: #3b5544; --land-context: #263b33; --border: #d0d6b8;
-  --hover: #818a5c; --correct: #65896d; --assisted: #4c6953; --label: #c4d5b4;
+  --hover: #818a5c; --correct: #a2c58d; --assisted: #89ad7b; --label: #354f31;
   --ink: #d7dfcc; --muted: #9cac97; --accent: #c1c993;
   --panel: #16271fb3; --panel-solid: #263d30; --line: #b6c9ad24; --control-hover: #d9e8c114;
   --button: #b7c58d; --button-ink: #2b3e2c; --wrong: #a36558; --wrong-text: #e9ae9b;
@@ -26,7 +26,7 @@
 [data-theme='dusk'] {
   --prompt-background: #faf3ff; --prompt-ink: #44314f; --prompt-border: #ffffff;
   --ocean: #29263e; --land: #514760; --land-context: #393347; --border: #dbcae3;
-  --hover: #a281b2; --correct: #6a8d88; --assisted: #536b70; --label: #bed3cc;
+  --hover: #a281b2; --correct: #91c3ad; --assisted: #7aad9b; --label: #2e5445;
   --ink: #e6ddec; --muted: #afa0bd; --accent: #d3afd8;
   --panel: #242036b3; --panel-solid: #383048; --line: #cebad924; --control-hover: #eccefa14;
   --button: #c5aad7; --button-ink: #352941; --wrong: #b2627d; --wrong-text: #f0a8c0;
@@ -36,7 +36,7 @@
   --prompt-background: #233e4c; --prompt-ink: #f7fbff; --prompt-border: #5e7886;
   --prompt-wrong: #ff8794; --prompt-correct: #95deaf;
   --ocean: #d9e5e9; --land: #f0f0e7; --land-context: #c7d4d2; --border: #587568;
-  --hover: #789bc9; --correct: #adc5af; --assisted: #c4d2bd; --label: #516b52;
+  --hover: #789bc9; --correct: #4e8f71; --assisted: #6ca286; --label: #e2f0dc;
   --ink: #344b58; --muted: #718993; --accent: #396891;
   --panel: #f1f5f3b3; --panel-solid: #f0f4f1; --line: #627e8524; --control-hover: #496d8610;
   --button: #486b7f; --button-ink: #f5f8f6; --wrong: #cd8580; --wrong-text: #a74647;

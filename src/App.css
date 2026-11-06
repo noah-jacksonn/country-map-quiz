@@ -5,14 +5,16 @@
 .country { fill: var(--land); stroke: var(--border); stroke-width: 1.4; vector-effect: non-scaling-stroke; transition: fill 120ms ease; outline: none; }
 .country:focus-visible { stroke: var(--ink); stroke-width: 2.4; }
 .country.excluded { fill: var(--land-context); }
-.country.answered { fill: var(--correct); }
+.country.answered { fill: var(--correct); stroke: var(--label); }
 .country.answered.assisted { fill: var(--assisted); }
+.country.answered:hover, .country.answered.hovered { stroke-width: 2.1; }
 .country.included:not(.answered, .revealed):hover, .country.included:not(.answered, .revealed):focus-visible, .country.included.hovered:not(.answered, .revealed) { fill: var(--hover); stroke: var(--border); stroke-width: 1.8; outline: none; }
 .country.revealed { fill: var(--hint); animation: reveal-country 1.6s ease-in-out infinite; stroke: var(--hint-outline); stroke-width: 2.4; }
 .country-label { fill: var(--label); opacity: .58; font-weight: 450; pointer-events: none; user-select: none; }
 .country.wrong, .country.included.wrong:hover, .country.included.wrong:focus-visible { fill: var(--wrong); stroke: var(--wrong); }
 .is-dragging .country:hover { fill: var(--land); }
 .is-dragging .country.answered:hover { fill: var(--correct); }
+.is-dragging .country.answered.assisted:hover { fill: var(--assisted); }
 .is-dragging .country.excluded:hover { fill: var(--land-context); }
 .small-hit { fill: transparent; }
 .small-dot { fill: var(--land); stroke: var(--border); stroke-width: 1.5; pointer-events: none; }
@@ -54,10 +56,11 @@
 .guess-dots { display: flex; gap: 5px; margin-left: 3px; flex-shrink: 0; }
 .guess-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--prompt-ink); opacity: .2; transition: background-color 150ms, opacity 150ms; }
 .guess-dots .used { background: var(--prompt-wrong); opacity: 1; }
-.wrong-feedback { position: absolute; z-index: 5; top: max(20px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; gap: 8px; max-width: calc(100vw - 32px); width: max-content; padding: 12px 17px; border-radius: 12px; background: var(--prompt-background); color: var(--prompt-ink); border: 1px solid var(--prompt-border); box-shadow: 0 8px 28px #0003; font-size: 15px; pointer-events: none; animation: feedback-appear 180ms ease-out; }
+.wrong-feedback, .found-feedback { position: absolute; z-index: 5; top: max(20px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; gap: 8px; max-width: calc(100vw - 32px); width: max-content; padding: 12px 17px; border-radius: 12px; background: var(--prompt-background); color: var(--prompt-ink); border: 1px solid var(--prompt-border); box-shadow: 0 8px 28px #0003; font-size: 15px; pointer-events: none; animation: feedback-appear 180ms ease-out; }
 .wrong-feedback-icon { color: var(--prompt-wrong); flex-shrink: 0; }
-.wrong-feedback > .country-flag { flex-shrink: 0; }
-.wrong-feedback strong { font-size: 18px; font-weight: 650; min-width: 0; }
+.found-feedback-icon { color: var(--prompt-correct); flex-shrink: 0; }
+.wrong-feedback > .country-flag, .found-feedback > .country-flag { flex-shrink: 0; }
+.wrong-feedback strong, .found-feedback strong { font-size: 18px; font-weight: 650; min-width: 0; }
 .modal { width: min(420px, calc(100vw - 32px)); max-height: min(650px, calc(100dvh - 40px)); border: 1px solid var(--line); border-radius: 16px; padding: 0; color: var(--ink); background: var(--panel-solid); box-shadow: 0 24px 100px #0003; }
 .modal::backdrop { background: #0003; backdrop-filter: blur(3px); }
 .modal-content { padding: 24px; }
@@ -103,7 +106,7 @@
 @keyframes reveal-country { 0%,100% { fill: var(--hint); } 50% { fill: var(--hint-bright); } }
 @keyframes feedback-appear { from { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(.96); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
 @media (max-width: 1000px) {
-  .wrong-feedback { top: max(74px, calc(env(safe-area-inset-top) + 56px)); }
+  .wrong-feedback, .found-feedback { top: max(74px, calc(env(safe-area-inset-top) + 56px)); }
 }
 @media (max-width: 600px) {
   .game-toolbar { top: max(12px, env(safe-area-inset-top)); left: 12px; right: 12px; gap: 8px; }
