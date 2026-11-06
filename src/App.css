@@ -58,7 +58,6 @@
 .guess-dots .used { background: var(--prompt-wrong); opacity: 1; }
 .wrong-feedback, .found-feedback { position: absolute; z-index: 5; top: max(20px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; gap: 8px; max-width: calc(100vw - 32px); width: max-content; padding: 12px 17px; border-radius: 12px; background: var(--prompt-background); color: var(--prompt-ink); border: 1px solid var(--prompt-border); box-shadow: 0 8px 28px #0003; font-size: 15px; pointer-events: none; animation: feedback-appear 180ms ease-out; }
 .wrong-feedback-icon { color: var(--prompt-wrong); flex-shrink: 0; }
-.found-feedback-icon { color: var(--prompt-correct); flex-shrink: 0; }
 .wrong-feedback > .country-flag, .found-feedback > .country-flag { flex-shrink: 0; }
 .wrong-feedback strong, .found-feedback strong { font-size: 18px; font-weight: 650; min-width: 0; }
 .modal { width: min(420px, calc(100vw - 32px)); max-height: min(650px, calc(100dvh - 40px)); border: 1px solid var(--line); border-radius: 16px; padding: 0; color: var(--ink); background: var(--panel-solid); box-shadow: 0 24px 100px #0003; }

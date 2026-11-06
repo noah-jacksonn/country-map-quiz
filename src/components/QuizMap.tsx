@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { Check, Minus, Plus, Scan } from 'lucide-react';
+import { Minus, Plus, Scan } from 'lucide-react';
 import geography from '../data/map.json';
 import { countries, countryFlag, countryName } from '../data/countries';
 import type { Answer } from '../game';
@@ -25,7 +25,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
   const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [camera, setCamera] = useState<Camera>(origin);
   const [dragging, setDragging] = useState(false);
-  const [hovered, setHovered] = useState<string | null>(null);
+  const [hovered, setHovered] = useState<{ id: string; answer: Answer | undefined } | null>(null);
   const gesture = useRef<{ down: Point; last: Point; country: string | null; moved: boolean } | null>(null);
   const pointers = useRef(new Map<number, Point>());
   const pinch = useRef<{ distance: number; center: Point } | null>(null);
@@ -36,7 +36,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
   const includeSet = new Set(included);
   const labeledCountries = geography.countries.filter(country =>
     answered.has(country.id) && country.label.fontSize * scale >= minimumLabelSize);
-  const hoveredAnswer = hovered && answered.has(hovered) && !dragging && !wrong && !flash ? hovered : null;
+  const hoveredAnswer = hovered?.answer && answered.get(hovered.id) === hovered.answer && !dragging && !wrong && !flash ? hovered.id : null;
 
   useEffect(() => {
     const observer = new ResizeObserver(([entry]) => setSize({ width: entry.contentRect.width, height: entry.contentRect.height }));
@@ -73,6 +73,14 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
   const countryAt = (target: EventTarget) => (target as Element).closest('[data-country-id]')?.getAttribute('data-country-id') ?? null;
+
+  function hoverCountry(event: ReactPointerEvent<SVGSVGElement>) {
+    // Capture can generate boundary events without a genuine new hover.
+    if (pointers.current.size) return;
+    const id = countryAt(event.target);
+    // Only inspect an answer that already existed when this hover began.
+    setHovered(previous => previous?.id === id ? previous : id ? { id, answer: answered.get(id) } : null);
+  }
 
   function pointerDown(event: ReactPointerEvent<SVGSVGElement>) {
     if (event.button !== 0) return;
@@ -130,7 +138,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
     <svg ref={ref} className={`quiz-map${dragging ? ' is-dragging' : ''}`} data-map-surface
       viewBox={`0 0 ${size.width} ${size.height}`} aria-label="Interactive map of Asia"
       onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}
-      onPointerOver={event => setHovered(countryAt(event.target))} onPointerLeave={() => setHovered(null)}>
+      onPointerOver={hoverCountry} onPointerLeave={() => { if (!pointers.current.size) setHovered(null); }}>
       <defs>{labeledCountries.map(country => <clipPath id={`label-${country.id}`} key={country.id}><path d={country.path} /></clipPath>)}</defs>
       <g transform={`translate(${size.width / 2 + camera.x} ${size.height / 2 + camera.y}) scale(${scale}) translate(${-focus.x} ${-focus.y})`}>
         <path d={geography.context} className="context-land" />
@@ -138,7 +146,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
           const answer = answered.get(country.id);
           const active = includeSet.has(country.id);
           return <path key={country.id} d={country.path ?? ''} data-country-id={country.id}
-            className={`country ${active ? 'included' : 'excluded'}${answer ? ` answered${answer.assisted ? ' assisted' : ''}` : ''}${revealed === country.id ? ' revealed' : ''}${flash === country.id ? ' just-correct' : ''}${hovered === country.id ? ' hovered' : ''}${wrong === country.id ? ' wrong' : ''}`}
+            className={`country ${active ? 'included' : 'excluded'}${answer ? ` answered${answer.assisted ? ' assisted' : ''}` : ''}${revealed === country.id ? ' revealed' : ''}${flash === country.id ? ' just-correct' : ''}${hovered?.id === country.id ? ' hovered' : ''}${wrong === country.id ? ' wrong' : ''}`}
             tabIndex={active && !answer ? 0 : -1} role="button" aria-label={countryName(country.id)} aria-disabled={!active || !!answer}
             onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onGuess(country.id); } }} />;
         })}
@@ -157,8 +165,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
         })}
       </g>
     </svg>
-    {hoveredAnswer && <div className="found-feedback" aria-label={`Found country: ${countryName(hoveredAnswer)}`}>
-      <Check className="found-feedback-icon" size={18} aria-hidden="true" />
+    {hoveredAnswer && <div className="found-feedback" aria-label={countryName(hoveredAnswer)}>
       <span className="country-flag" aria-hidden="true">{countryFlag(hoveredAnswer)}</span><strong>{countryName(hoveredAnswer)}</strong>
     </div>}
     <div className="map-controls surface" aria-label="Map controls">
