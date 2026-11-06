@@ -53,6 +53,12 @@ export function archive(profile: Profile, game: Game): Attempt[] {
   return [attempt, ...profile.history.filter(item => item.id !== game.id)];
 }
 
+export function startGame(profile: Profile, mode: Game['mode'] = 'quiz', ids?: string[]): Profile {
+  return { ...profile, active: newGame(mode, ids),
+    // Completed rounds were already archived on the final answer. Don't restore deleted attempts.
+    history: isComplete(profile.active) ? profile.history : archive(profile, profile.active) };
+}
+
 export function answerCountry(profile: Profile, id: string): Profile {
   const game = profile.active;
   if (isComplete(game) || game.answers.some(answer => answer.id === id) || !game.order.includes(id)) return profile;

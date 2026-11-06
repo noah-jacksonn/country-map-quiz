@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Check, ChevronRight, Clock3, History, Infinity as InfinityIcon, Palette, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
+import { Check, ChevronRight, Clock3, History, Infinity as InfinityIcon, Palette, RotateCcw, Trash2, Volume2, VolumeX, X } from 'lucide-react';
 import { QuizMap } from './components/QuizMap';
 import { PointerPrompt } from './components/PointerPrompt';
 import { countryFlag, countryName } from './data/countries';
-import { accuracy, answerCountry, archive, attemptMistakes, formatTime, isComplete, newGame, readProfile, roundMistakes, STORAGE_KEY } from './game';
-import type { Game } from './game';
+import { accuracy, answerCountry, attemptMistakes, formatTime, isComplete, readProfile, roundMistakes, startGame, STORAGE_KEY } from './game';
+import type { Attempt, Game } from './game';
 import { playAnswer } from './sound';
 import { themes } from './themes';
 import { useTheme } from 'next-themes';
 import './App.css';
 
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+function Modal({ title, onClose, children, className = '' }: { title: string; onClose: () => void; children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => { ref.current?.showModal(); }, []);
-  return <dialog ref={ref} className="modal" onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+  return <dialog ref={ref} className={`modal ${className}`} onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="modal-content">
       <div className="modal-heading"><h1>{title}</h1><button className="icon-button close-button" onClick={onClose} aria-label="Close" title="Close"><X size={20} /></button></div>
       {children}
@@ -25,6 +25,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 export default function App() {
   const [profile, setProfile] = useState(readProfile);
   const [historyCount, setHistoryCount] = useState(30);
+  const [deletedAttempts, setDeletedAttempts] = useState<Attempt[]>([]);
   const { setTheme } = useTheme();
   const mapTheme = profile.theme ?? 'ocean';
   const [modal, setModal] = useState<'practice' | 'history' | 'restart' | 'complete' | null>(null);
@@ -84,9 +85,21 @@ export default function App() {
     if (mode === 'practice' && !ids?.length) return;
     clearTimeout(flashTimer.current); locked.current = false;
     setFlash(null); setWrong(null);
-    const active = newGame(mode, ids);
-    setProfile(previous => ({ ...previous, history: archive(previous, previous.active), active }));
+    setProfile(previous => startGame(previous, mode, ids));
     setModal(null);
+  }
+
+  function deleteAttempts(ids: string[]) {
+    const selected = new Set(ids);
+    setDeletedAttempts(profile.history.filter(attempt => selected.has(attempt.id)));
+    setProfile(previous => ({ ...previous, history: previous.history.filter(attempt => !selected.has(attempt.id)) }));
+  }
+
+  function undoDelete() {
+    setProfile(previous => ({ ...previous, history: [
+      ...previous.history, ...deletedAttempts.filter(attempt => !previous.history.some(saved => saved.id === attempt.id)),
+    ].sort((a, b) => b.date - a.date) }));
+    setDeletedAttempts([]);
   }
 
   return <main className="app" data-theme={mapTheme}>
@@ -131,15 +144,22 @@ export default function App() {
       {game.mode === 'practice' && <button className="text-button" title="Start a quiz with all 48 countries" onClick={() => start('quiz')}>Back to the full quiz</button>}
     </Modal>}
 
-    {modal === 'history' && <Modal title="Past attempts" onClose={() => setModal(null)}>
-      {!profile.history.length ? <div className="empty-history"><History size={27} /><p>Fresh start.</p></div> : <div className="history-list">{profile.history.slice(0, historyCount).map(attempt => {
+    {modal === 'history' && <Modal title="Past attempts" className="history-modal" onClose={() => setModal(null)}>
+      {!profile.history.length ? <div className="empty-history"><History size={27} /><p>Fresh start.</p></div> : <div className="history-list" tabIndex={0} role="region" aria-label="Saved attempts">{profile.history.slice(0, historyCount).map(attempt => {
         const missed = attemptMistakes(attempt);
         return <div className="history-row" key={attempt.id}>
           <span className="history-score" title="Accuracy: countries found ÷ total guesses">{accuracy(attempt.answers.length, attempt.guesses)}<small>%</small></span>
           <div className="history-detail"><strong>{attempt.answers.length} / {attempt.total} countries <span>{attempt.complete ? 'Complete' : 'Partial'}</span></strong><p>{new Date(attempt.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {new Date(attempt.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · {formatTime(attempt.elapsed)}</p></div>
-          <button className="icon-button" disabled={!missed.length} aria-label={`Practice ${missed.length} missed countries from this attempt`} title={missed.length ? `Practice ${missed.length} missed countries` : 'No mistakes in this attempt'} onClick={() => start('practice', missed)}><InfinityIcon size={20} /></button>
+          <div className="history-actions">
+            <button className="icon-button" disabled={!missed.length} aria-label={`Practice ${missed.length} missed countries from this attempt`} title={missed.length ? `Practice ${missed.length} missed countries` : 'No mistakes in this attempt'} onClick={() => start('practice', missed)}><InfinityIcon size={18} /></button>
+            <button className="icon-button delete-attempt" aria-label={`Delete attempt from ${new Date(attempt.date).toLocaleString()}`} title="Delete attempt" onClick={() => deleteAttempts([attempt.id])}><Trash2 size={16} /></button>
+          </div>
         </div>;
       })}{profile.history.length > historyCount && <button className="text-button" title="Show 30 more attempts" onClick={() => setHistoryCount(count => count + 30)}>Show more</button>}</div>}
+      {(profile.history.length > 0 || deletedAttempts.length > 0) && <div className="history-footer">
+        {deletedAttempts.length > 0 && <button className="text-button" title="Undo the last deletion" onClick={undoDelete}>Undo</button>}
+        {profile.history.length > 0 && <button className="text-button clear-history" title="Delete all past attempts" onClick={() => deleteAttempts(profile.history.map(attempt => attempt.id))}>Clear all</button>}
+      </div>}
     </Modal>}
 
     {modal === 'restart' && <Modal title="New quiz?" onClose={() => setModal(null)}>

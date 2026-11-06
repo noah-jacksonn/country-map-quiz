@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import { answerCountry, archive, attemptMistakes, newGame, readProfile, roundMistakes, STORAGE_KEY } from '../src/game.ts';
+import { answerCountry, archive, attemptMistakes, newGame, readProfile, roundMistakes, startGame, STORAGE_KEY } from '../src/game.ts';
 
 const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
 afterEach(() => {
@@ -91,4 +91,26 @@ test('a perfect old attempt supplies no mistake practice', () => {
   assert.deepEqual(restored.mistakes, []);
   assert.equal(restored.active.mode, 'quiz');
   assert.deepEqual(attemptMistakes(restored.history[0]), []);
+});
+
+test('a deleted completed attempt stays deleted after reload and starting another round', () => {
+  let p = answerCountry(profile(), '356');
+  for (const id of ['634', '356', '392']) p = answerCountry(p, id);
+  assert.equal(p.history.length, 1);
+  const restored = readSaved({ ...p, history: [] });
+  for (const mode of ['quiz', 'practice']) {
+    const next = startGame(restored, mode, mode === 'practice' ? restored.mistakes : undefined);
+    assert.deepEqual(next.history, []);
+    assert.deepEqual(next.mistakes, ['634']);
+    assert.notEqual(next.active.id, p.active.id);
+  }
+});
+
+test('starting another round still archives an unfinished quiz', () => {
+  const p = answerCountry(profile(), '356');
+  const next = startGame(p, 'practice', p.mistakes);
+  assert.equal(next.history.length, 1);
+  assert.equal(next.history[0].id, p.active.id);
+  assert.equal(next.history[0].complete, false);
+  assert.deepEqual(attemptMistakes(next.history[0]), ['634']);
 });
