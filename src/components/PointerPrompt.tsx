@@ -2,9 +2,9 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import { countryFlag, countryName } from '../data/countries';
 
-type Props = { country: string; misses: number; correct: boolean; hidden: boolean; wrong: string | null };
+type Props = { country: string; misses: number; correct: boolean; hidden: boolean };
 
-export function PointerPrompt({ country, misses, correct, hidden, wrong }: Props) {
+export function PointerPrompt({ country, misses, correct, hidden }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
 
@@ -19,7 +19,7 @@ export function PointerPrompt({ country, misses, correct, hidden, wrong }: Props
     element.style.top = `${Math.max(12, y)}px`;
   }
 
-  useLayoutEffect(position, [country, misses, correct, wrong]);
+  useLayoutEffect(position, [country, misses, correct]);
   useEffect(() => {
     const element = ref.current!;
     function move(event: PointerEvent) {
@@ -52,13 +52,11 @@ export function PointerPrompt({ country, misses, correct, hidden, wrong }: Props
     };
   }, []);
 
-  return <div ref={ref} className={`pointer-prompt surface${correct ? ' correct' : ''}${hidden ? ' hidden' : ''}`}>
+  return <div ref={ref} className={`pointer-prompt${correct ? ' correct' : ''}${hidden ? ' hidden' : ''}`}>
     <div className="prompt-main">
       <span className="country-flag" aria-hidden="true">{countryFlag(country)}</span>
-      <span>{correct ? '' : 'Click on '}<strong>{countryName(country)}</strong></span>
-      {correct ? <Check size={15} /> : misses > 0 && <span className="guess-dots" aria-label={`${misses} incorrect guesses`}>{[0, 1, 2].map(i => <i key={i} className={i < misses ? 'used' : ''} />)}</span>}
+      <strong>{countryName(country)}</strong>
+      {correct ? <Check className="prompt-check" size={21} aria-hidden="true" /> : <span className="guess-dots" aria-label={`${misses} incorrect ${misses === 1 ? 'guess' : 'guesses'}`}>{[0, 1, 2].map(i => <i key={i} className={i < misses ? 'used' : ''} />)}</span>}
     </div>
-    {wrong && <div className="prompt-feedback">That’s {countryFlag(wrong)} {countryName(wrong)}</div>}
-    {misses >= 3 && !correct && !wrong && <span className="prompt-hint">Highlighted for you</span>}
   </div>;
 }

@@ -16,8 +16,8 @@ Game data stays in the visitor's browser. Moving to a new hostname does not auto
 
 ## Play
 
-- Hover to highlight, click to answer. The prompt follows the pointer; on touch it stays near the bottom.
-- Three incorrect guesses highlight the answer with a gold pulse. Wrong clicks briefly flash the country red and identify it in the cursor prompt, without a separate map callout.
+- Hover to highlight, click to answer. The high-contrast prompt shows the flag and country name. It follows the pointer; on touch it stays near the bottom. Each wrong guess turns one of its three dots red.
+- Three incorrect guesses reveal the answer with a gold color pulse. The color cue continues at a slower pace with reduced motion enabled. Wrong clicks briefly flash the country red and identify it in a top-center message. Country focus follows the shape without a rectangular outline.
 - Correct answers retain a small, muted label fitted inside the country. Labels scale with the map; assisted answers use a lighter shade of the same green.
 - Accuracy is completed countries divided by total guesses. Water, completed countries, and countries outside the current practice set don't count as guesses.
 - Practice includes countries found without a reveal, including second or third guesses. Practice is unscored and can be repeated freely. Each past attempt can also launch practice for its own unassisted answers.

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Check, ChevronRight, Clock3, History, Infinity as InfinityIcon, Palette, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
 import { QuizMap } from './components/QuizMap';
 import { PointerPrompt } from './components/PointerPrompt';
-import { countryName } from './data/countries';
+import { countryFlag, countryName } from './data/countries';
 import { accuracy, answerCountry, archive, formatTime, isComplete, newGame, readProfile, STORAGE_KEY } from './game';
 import type { Game } from './game';
 import { playAnswer } from './sound';
@@ -59,7 +59,7 @@ export default function App() {
   }, [complete, game.id]);
   useEffect(() => {
     if (!wrong) return;
-    const timeout = setTimeout(() => setWrong(null), 1200);
+    const timeout = setTimeout(() => setWrong(null), 2000);
     return () => clearTimeout(timeout);
   }, [wrong]);
   useEffect(() => () => clearTimeout(flashTimer.current), []);
@@ -112,8 +112,12 @@ export default function App() {
         <span>{theme.name}</span>{mapTheme === theme.id && <Check size={14} />}
       </button>)}
     </div>
-    <PointerPrompt country={flash ?? target ?? ''} misses={game.misses} correct={!!flash} hidden={!!modal || (complete && !flash)} wrong={wrong?.id ?? null} />
-    <div className="sr-only" role="status" aria-live="polite">{flash ? `Correct. ${countryName(flash)}.` : complete ? 'Round complete.' : `Click on ${countryName(target)}.${game.misses >= 3 ? ' The correct country is highlighted.' : ''}`}</div>
+    <PointerPrompt country={flash ?? target ?? ''} misses={game.misses} correct={!!flash} hidden={!!modal || (complete && !flash)} />
+    {wrong && !modal && <div key={wrong.key} className="wrong-feedback" role="status" aria-live="polite">
+      <X className="wrong-feedback-icon" size={18} aria-hidden="true" />
+      <span>That’s</span><span className="country-flag" aria-hidden="true">{countryFlag(wrong.id)}</span><strong>{countryName(wrong.id)}</strong>
+    </div>}
+    <div className="sr-only" role="status" aria-live="polite">{flash ? `Correct. ${countryName(flash)}.` : complete ? 'Round complete.' : `${countryName(target)}.${game.misses >= 3 ? ' Follow the pulsing country.' : ''}`}</div>
     {storageBlocked && <p className="storage-notice">Browser storage is unavailable. This round won’t be saved.</p>}
     {complete && !modal && <button className="finish-button surface" title="View round results" onClick={() => setModal('complete')}>Round complete <ChevronRight size={17} /></button>}
 
