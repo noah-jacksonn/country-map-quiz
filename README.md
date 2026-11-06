@@ -23,7 +23,8 @@ Game data stays in the visitor's browser. Moving to a new hostname does not auto
 - Practice includes countries found without a reveal, including second or third guesses. Practice is unscored and can be repeated freely. Each past attempt can also launch practice for its own unassisted answers.
 - The current round, known countries, theme and mute preferences, and all completed or interrupted quizzes are stored in localStorage under `country-map-quiz.v1`.
 - The palette button switches between Ocean, Forest, Dusk, and Paper; the chosen theme is saved locally. Country borders use brighter strokes on dark themes and darker strokes on Paper. The cursor prompt includes the target country flag.
-- Scroll or pinch to zoom, drag to move, or use the bottom-right controls. The initial and reset view is zoomed to 120%. Country shapes also support Tab and Enter/Space.
+- Scroll or pinch to zoom, drag to move, or use the bottom-right controls. The initial and reset view is zoomed to 150% and centered on the countries below Russia, leaving northern and eastern Russia partly offscreen. Country shapes also support Tab and Enter/Space.
+- Controls and score statistics have hover tooltips.
 - Short synthesized right/wrong sounds are enabled by default. The speaker button mutes them. There is no speech.
 
 ## Sources and development

@@ -16,7 +16,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   useEffect(() => { ref.current?.showModal(); }, []);
   return <dialog ref={ref} className="modal" onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="modal-content">
-      <div className="modal-heading"><h1>{title}</h1><button className="icon-button close-button" onClick={onClose} aria-label="Close"><X size={20} /></button></div>
+      <div className="modal-heading"><h1>{title}</h1><button className="icon-button close-button" onClick={onClose} aria-label="Close" title="Close"><X size={20} /></button></div>
       {children}
     </div>
   </dialog>;
@@ -92,13 +92,13 @@ export default function App() {
     <QuizMap answers={game.answers} included={game.order} revealed={game.misses >= 3 ? target : null} flash={flash} onGuess={guess} wrong={wrong?.id ?? null} />
     <header className="game-toolbar">
       <div className="scoreboard surface" aria-label="Round progress">
-        {game.mode === 'quiz' ? <span className="accuracy" title="Correct countries divided by total guesses">{score}<small>%</small></span> : <InfinityIcon size={22} className="practice-icon" aria-label="Free practice" />}
+        {game.mode === 'quiz' ? <span className="accuracy" title="Accuracy: countries found ÷ total guesses">{score}<small>%</small></span> : <span title="Free practice: no timer or score"><InfinityIcon size={22} className="practice-icon" aria-label="Free practice" /></span>}
         <span className="toolbar-divider" />
-        <span className="progress"><strong>{game.answers.length}</strong><span>/ {game.order.length}</span></span>
-        {game.mode === 'quiz' && <><span className="toolbar-divider" /><span className="timer"><Clock3 size={14} />{formatTime(game.elapsed)}</span></>}
+        <span className="progress" title={`${game.answers.length} of ${game.order.length} countries found`}><strong>{game.answers.length}</strong><span>/ {game.order.length}</span></span>
+        {game.mode === 'quiz' && <><span className="toolbar-divider" /><span className="timer" title="Time spent on this round"><Clock3 size={14} />{formatTime(game.elapsed)}</span></>}
       </div>
       <nav className="actions surface" aria-label="Game options">
-        <button className={`practice-button${game.mode === 'practice' ? ' selected' : ''}`} aria-label="Free practice" onClick={() => setModal('practice')}><InfinityIcon size={18} /></button>
+        <button className={`practice-button${game.mode === 'practice' ? ' selected' : ''}`} aria-label="Free practice" title="Practice countries you know" onClick={() => setModal('practice')}><InfinityIcon size={18} /></button>
         <button className="icon-button" aria-label="Choose theme" title="Choose theme" popoverTarget="theme-picker"><Palette size={17} /></button>
         <button className="icon-button" aria-label="Past attempts" title="Past attempts" onClick={() => setModal('history')}><History size={18} /></button>
         <button className="icon-button" aria-label={profile.sound ? 'Mute sound effects' : 'Unmute sound effects'} title={profile.sound ? 'Mute sound effects' : 'Unmute sound effects'} aria-pressed={!profile.sound} onClick={() => setProfile(previous => ({ ...previous, sound: !previous.sound }))}>{profile.sound ? <Volume2 size={18} /> : <VolumeX size={18} />}</button>
@@ -106,7 +106,7 @@ export default function App() {
       </nav>
     </header>
     <div id="theme-picker" popover="auto" className="theme-picker" aria-label="Map theme">
-      {themes.map(theme => <button key={theme.id} className="theme-option" aria-pressed={mapTheme === theme.id}
+      {themes.map(theme => <button key={theme.id} className="theme-option" aria-pressed={mapTheme === theme.id} title={`Use ${theme.name} theme`}
         onClick={() => setProfile(previous => ({ ...previous, theme: theme.id }))}>
         <span className="theme-swatch" data-theme={theme.id}><i /><i /><i /></span>
         <span>{theme.name}</span>{mapTheme === theme.id && <Check size={14} />}
@@ -115,39 +115,39 @@ export default function App() {
     <PointerPrompt country={flash ?? target ?? ''} misses={game.misses} correct={!!flash} hidden={!!modal || (complete && !flash)} wrong={wrong?.id ?? null} />
     <div className="sr-only" role="status" aria-live="polite">{flash ? `Correct. ${countryName(flash)}.` : complete ? 'Round complete.' : `Click on ${countryName(target)}.${game.misses >= 3 ? ' The correct country is highlighted.' : ''}`}</div>
     {storageBlocked && <p className="storage-notice">Browser storage is unavailable. This round won’t be saved.</p>}
-    {complete && !modal && <button className="finish-button surface" onClick={() => setModal('complete')}>Round complete <ChevronRight size={17} /></button>}
+    {complete && !modal && <button className="finish-button surface" title="View round results" onClick={() => setModal('complete')}>Round complete <ChevronRight size={17} /></button>}
 
     {modal === 'practice' && <Modal title="Practice" onClose={() => setModal(null)}>
       <p className="modal-description">Countries you know. No timer or score.</p>
       <div className="practice-count"><strong>{profile.known.length}</strong><span>{profile.known.length === 1 ? 'country ready' : 'countries ready'}</span></div>
       {profile.known.length ? <><div className="country-list">{[...profile.known].sort((a, b) => countryName(a).localeCompare(countryName(b))).map(id => <span key={id}>{countryName(id)}</span>)}</div>
-        <button className="primary-button" onClick={() => start('practice', profile.known)}>Start practicing <ChevronRight size={17} /></button>
-      </> : <><button className="primary-button" onClick={() => setModal(null)}>Back to the map <ChevronRight size={17} /></button></>}
-      {game.mode === 'practice' && <button className="text-button" onClick={() => start('quiz')}>Back to the full quiz</button>}
+        <button className="primary-button" title="Practice without a timer or score" onClick={() => start('practice', profile.known)}>Start practicing <ChevronRight size={17} /></button>
+      </> : <><button className="primary-button" title="Return to your current round" onClick={() => setModal(null)}>Back to the map <ChevronRight size={17} /></button></>}
+      {game.mode === 'practice' && <button className="text-button" title="Start a quiz with all 48 countries" onClick={() => start('quiz')}>Back to the full quiz</button>}
     </Modal>}
 
     {modal === 'history' && <Modal title="Past attempts" onClose={() => setModal(null)}>
       {!profile.history.length ? <div className="empty-history"><History size={27} /><p>Fresh start.</p></div> : <div className="history-list">{profile.history.slice(0, historyCount).map(attempt => {
         const known = attempt.answers.filter(a => !a.assisted).map(a => a.id);
         return <div className="history-row" key={attempt.id}>
-          <span className="history-score">{accuracy(attempt.answers.length, attempt.guesses)}<small>%</small></span>
+          <span className="history-score" title="Accuracy: countries found ÷ total guesses">{accuracy(attempt.answers.length, attempt.guesses)}<small>%</small></span>
           <div className="history-detail"><strong>{attempt.answers.length} / {attempt.total} countries <span>{attempt.complete ? 'Complete' : 'Partial'}</span></strong><p>{new Date(attempt.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {new Date(attempt.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · {formatTime(attempt.elapsed)}</p></div>
           <button className="icon-button" disabled={!known.length} aria-label={`Practice ${known.length} countries from this attempt`} title={`Practice ${known.length} countries`} onClick={() => start('practice', known)}><InfinityIcon size={20} /></button>
         </div>;
-      })}{profile.history.length > historyCount && <button className="text-button" onClick={() => setHistoryCount(count => count + 30)}>Show more</button>}</div>}
+      })}{profile.history.length > historyCount && <button className="text-button" title="Show 30 more attempts" onClick={() => setHistoryCount(count => count + 30)}>Show more</button>}</div>}
     </Modal>}
 
     {modal === 'restart' && <Modal title="New quiz?" onClose={() => setModal(null)}>
-      <button className="primary-button" onClick={() => start('quiz')}>New quiz <RotateCcw size={17} /></button>
-      <button className="text-button" onClick={() => setModal(null)}>Keep going</button>
+      <button className="primary-button" title="Save this attempt and start a new quiz" onClick={() => start('quiz')}>New quiz <RotateCcw size={17} /></button>
+      <button className="text-button" title="Continue your current round" onClick={() => setModal(null)}>Keep going</button>
     </Modal>}
 
     {modal === 'complete' && <Modal title={game.mode === 'practice' ? 'Practice complete' : 'Round complete'} onClose={() => setModal(null)}>
       <p className="modal-description">{game.order.length} countries.</p>
-      {game.mode === 'quiz' && <div className="result-stats"><div><strong>{score}<small>%</small></strong><span>Accuracy</span></div><div><strong>{game.answers.filter(a => a.misses === 0).length}</strong><span>First try</span></div><div><strong>{formatTime(game.elapsed)}</strong><span>Time</span></div></div>}
-      <button className="primary-button" onClick={() => start(game.mode, game.mode === 'practice' ? game.order : undefined)}>{game.mode === 'practice' ? 'Keep practicing' : 'Play again'} <RotateCcw size={17} /></button>
-      {game.mode === 'quiz' && profile.known.length > 0 && <button className="text-button" onClick={() => start('practice', profile.known)}>Practice what you know</button>}
-      <button className="text-button subtle" onClick={() => setModal(null)}>Look at your map</button>
+      {game.mode === 'quiz' && <div className="result-stats"><div title="Countries found ÷ total guesses"><strong>{score}<small>%</small></strong><span>Accuracy</span></div><div title="Countries found without a wrong guess"><strong>{game.answers.filter(a => a.misses === 0).length}</strong><span>First try</span></div><div title="Time spent on this round"><strong>{formatTime(game.elapsed)}</strong><span>Time</span></div></div>}
+      <button className="primary-button" title={game.mode === 'practice' ? 'Practice these countries again' : 'Start a fresh 48-country quiz'} onClick={() => start(game.mode, game.mode === 'practice' ? game.order : undefined)}>{game.mode === 'practice' ? 'Keep practicing' : 'Play again'} <RotateCcw size={17} /></button>
+      {game.mode === 'quiz' && profile.known.length > 0 && <button className="text-button" title="Practice countries found without a reveal" onClick={() => start('practice', profile.known)}>Practice what you know</button>}
+      <button className="text-button subtle" title="Return to your completed map" onClick={() => setModal(null)}>Look at your map</button>
     </Modal>}
   </main>;
 }

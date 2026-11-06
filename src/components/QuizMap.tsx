@@ -14,7 +14,9 @@ type Props = {
 };
 const anchors = geography.anchors as Record<string, number[]>;
 const bound = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
-const origin = { x: 0, y: 0, zoom: 1.2 };
+// Center the playable region below Russia, leaving its northern/eastern extent offscreen.
+const focus = { x: 640, y: 615 };
+const origin = { x: 0, y: 0, zoom: 1.5 };
 
 export const QuizMap = memo(function QuizMap({ answers, included, revealed, flash, onGuess, wrong }: Props) {
   const ref = useRef<SVGSVGElement>(null);
@@ -59,8 +61,8 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
     // The listener uses only viewport size; the camera update is functional.
   }, [size.width, size.height]);
 
-  const screen = (point: number[]): Point => ({ x: (point[0] - 800) * scale + size.width / 2 + camera.x,
-    y: (point[1] - 500) * scale + size.height / 2 + camera.y });
+  const screen = (point: number[]): Point => ({ x: (point[0] - focus.x) * scale + size.width / 2 + camera.x,
+    y: (point[1] - focus.y) * scale + size.height / 2 + camera.y });
   const eventPoint = (event: ReactPointerEvent) => {
     const rect = ref.current!.getBoundingClientRect();
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
@@ -125,7 +127,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
       onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}
       onPointerOver={event => setHovered(countryAt(event.target))} onPointerLeave={() => setHovered(null)}>
       <defs>{geography.countries.filter(country => answered.has(country.id)).map(country => <clipPath id={`label-${country.id}`} key={country.id}><path d={country.path} /></clipPath>)}</defs>
-      <g transform={`translate(${size.width / 2 + camera.x} ${size.height / 2 + camera.y}) scale(${scale}) translate(-800 -500)`}>
+      <g transform={`translate(${size.width / 2 + camera.x} ${size.height / 2 + camera.y}) scale(${scale}) translate(${-focus.x} ${-focus.y})`}>
         <path d={geography.context} className="context-land" />
         {geography.countries.map(country => {
           const answer = answered.get(country.id);
