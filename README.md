@@ -2,6 +2,8 @@
 
 A fullscreen, browser-local Asia quiz with the same 48-country selection as [Seterra's Asia quiz](https://www.geoguessr.com/vgp/3167).
 
+![Asia country quiz in the Ocean theme, with found countries in green and a flag prompt for Pakistan](docs/images/gameplay.webp)
+
 ## Run
 
 `npm install` then `npm run dev`. Open http://localhost:5197.
