@@ -12,11 +12,11 @@ A fullscreen, browser-local Asia quiz with the same 48-country selection as [Set
 
 ChatGPT Sites hosts the static `dist/` build. `.openai/hosting.json` links this checkout to its Site. Publishing uses the Sites workflow to build, save the matching source revision, and deploy that revision. The Site starts private; its audience is managed separately in Sites.
 
-Game data stays in the visitor's browser. Moving to a new hostname does not automatically copy history from localhost, and progress does not sync across devices. No hosted database or file-storage binding is required.
+Game data stays in the visitor's browser. Open tabs of the same site synchronize progress, history, and preferences; only the focused window advances the timer. Moving to a new hostname does not automatically copy history from localhost, and progress does not sync across devices. No hosted database or file-storage binding is required.
 
 ## Play
 
-- Hover to highlight, click to answer. The high-contrast prompt shows the flag and country name. It follows the pointer; on touch it stays near the bottom. Each wrong guess turns one of its three dots red.
+- Hover to highlight, click to answer. The high-contrast prompt shows the flag and country name. It follows the pointer; keyboard and touch input return it to the bottom. Each wrong guess turns one of its three dots red.
 - Three incorrect guesses reveal the answer with a gold color pulse. The color cue continues at a slower pace with reduced motion enabled. Wrong clicks briefly flash the country red and identify it in a top-center message. Country focus follows the shape without a rectangular outline.
 - Found countries use a contrasting green, with a nearby shade for assisted answers. Labels stay muted and fitted inside the country, appearing only when they fit at least 10 screen pixels and capped at 12 pixels. A fresh hover over a previously found country shows its flag and name at the top center; answering correctly never triggers that label. Unguessed countries stay unnamed.
 - Accuracy is completed countries divided by total guesses. Water, completed countries, and countries outside the current practice set don't count as guesses.
@@ -25,6 +25,7 @@ Game data stays in the visitor's browser. Moving to a new hostname does not auto
 - Past attempts scroll inside the dialog. Delete an individual attempt or clear the history, with Undo for the last deletion. Deleting history keeps the current round and recorded practice mistakes.
 - The palette button switches between Ocean, Forest, Dusk, and Paper; the chosen theme is saved locally. Country borders use brighter strokes on dark themes and darker strokes on Paper. The cursor prompt includes the target country flag.
 - Scroll or pinch to zoom, drag to move, or use the bottom-right controls. The initial and reset view is zoomed to 150% and centered on the countries below Russia, leaving northern and eastern Russia partly offscreen. Country shapes also support Tab and Enter/Space.
+- Small-country markers have expanded click areas. Where those areas overlap, the nearest marker wins for both hovering and clicking. Finding a small country removes its expanded target; its actual map shape remains available for hover lookup.
 - Controls and score statistics have hover tooltips.
 - Short synthesized right/wrong sounds are enabled by default. The speaker button mutes them. There is no speech.
 

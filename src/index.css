@@ -54,7 +54,7 @@ button svg { flex-shrink: 0; }
   :root { --cursor-default: url('/cursors/rounded-arrow.svg') 5 4, default; --cursor-pointer: url('/cursors/pointing-hand.svg') 19 12, pointer; --cursor-drag: url('/cursors/closed-hand.svg') 21 20, grabbing; }
   [data-theme='paper'] { --cursor-default: url('/cursors/rounded-arrow-light.svg') 5 4, default; --cursor-pointer: url('/cursors/pointing-hand-light.svg') 19 12, pointer; --cursor-drag: url('/cursors/closed-hand-light.svg') 21 20, grabbing; }
   body, .quiz-map { cursor: var(--cursor-default); }
-  button, .country.included:not(.answered), .small-country:not(.answered) { cursor: var(--cursor-pointer); }
+  button, .country.included:not(.answered), .small-country { cursor: var(--cursor-pointer); }
   .quiz-map.is-dragging, .quiz-map.is-dragging * { cursor: var(--cursor-drag); }
   button:disabled { cursor: not-allowed; }
 }

@@ -18,10 +18,10 @@
 .is-dragging .country.excluded:hover { fill: var(--land-context); }
 .small-hit { fill: transparent; }
 .small-dot { fill: var(--land); stroke: var(--border); stroke-width: 1.5; pointer-events: none; }
-.small-country:hover .small-dot { fill: var(--hover); stroke: var(--border); }
-.small-country.answered .small-dot { opacity: 0; }
+.small-country.hovered .small-dot { fill: var(--hover); stroke: var(--border); }
 .small-country.revealed .small-dot { fill: var(--hint); animation: reveal-country 1.6s ease-in-out infinite; stroke: var(--hint-outline); stroke-width: 2.4; }
 .small-country.wrong .small-dot { fill: var(--wrong); stroke: var(--wrong); }
+.country.revealed:focus-visible, .country.answered:focus-visible, .small-country.focused .small-dot { stroke: var(--ink); stroke-width: 3.2; }
 .surface { background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(12px); }
 .game-toolbar { position: absolute; top: max(18px, env(safe-area-inset-top)); left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; gap: 12px; }
 .scoreboard, .actions { display: flex; align-items: center; height: 39px; border-radius: 9px; pointer-events: auto; color: var(--muted); }

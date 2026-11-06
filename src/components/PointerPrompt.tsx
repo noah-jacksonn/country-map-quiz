@@ -34,18 +34,35 @@ export function PointerPrompt({ country, misses, correct, hidden }: Props) {
       position();
     }
     function leave() { element.dataset.away = 'true'; }
+    function dock() {
+      pointer.current = null;
+      delete element.dataset.following;
+      delete element.dataset.away;
+      element.style.removeProperty('left');
+      element.style.removeProperty('top');
+    }
     function focus(event: FocusEvent) {
-      if (!(event.target as Element)?.closest?.('[data-country-id]') || pointer.current) return;
-      element.dataset.away = 'false';
+      const target = event.target as Element;
+      if (target?.closest?.('[data-country-id]') && target.matches(':focus-visible')) dock();
+    }
+    function key(event: KeyboardEvent) {
+      if ((event.target as Element)?.closest?.('[data-country-id]')) dock();
+    }
+    function press(event: PointerEvent) {
+      if (event.pointerType === 'touch' && (event.target as Element)?.closest?.('[data-map-surface]')) dock();
     }
     window.addEventListener('pointermove', move);
+    window.addEventListener('pointerdown', press);
     window.addEventListener('focusin', focus);
+    window.addEventListener('keydown', key);
     window.addEventListener('resize', position);
     document.documentElement.addEventListener('pointerleave', leave);
     window.addEventListener('blur', leave);
     return () => {
       window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerdown', press);
       window.removeEventListener('focusin', focus);
+      window.removeEventListener('keydown', key);
       window.removeEventListener('resize', position);
       document.documentElement.removeEventListener('pointerleave', leave);
       window.removeEventListener('blur', leave);

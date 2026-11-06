@@ -50,7 +50,7 @@ export function archive(profile: Profile, game: Game): Attempt[] {
   if (profile.history.some(attempt => attempt.id === game.id)) return profile.history;
   const attempt = { id: game.id, date: Date.now(), answers: game.answers, total: game.order.length,
     guesses: game.guesses, elapsed: game.elapsed, complete: isComplete(game), mistakes: roundMistakes(game) };
-  return [attempt, ...profile.history.filter(item => item.id !== game.id)];
+  return [attempt, ...profile.history];
 }
 
 export function startGame(profile: Profile, mode: Game['mode'] = 'quiz', ids?: string[]): Profile {

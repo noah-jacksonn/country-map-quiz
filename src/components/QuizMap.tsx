@@ -4,8 +4,9 @@ import { Minus, Plus, Scan } from 'lucide-react';
 import geography from '../data/map.json';
 import { countries, countryFlag, countryName } from '../data/countries';
 import type { Answer } from '../game';
+import { nearestMarker } from '../map-interaction';
+import type { Point } from '../map-interaction';
 
-type Point = { x: number; y: number };
 type Camera = Point & { zoom: number };
 type Props = {
   answers: Answer[]; included: string[]; revealed: string | null;
@@ -26,6 +27,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
   const [camera, setCamera] = useState<Camera>(origin);
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState<{ id: string; answer: Answer | undefined } | null>(null);
+  const [focused, setFocused] = useState<string | null>(null);
   const gesture = useRef<{ down: Point; last: Point; country: string | null; moved: boolean } | null>(null);
   const pointers = useRef(new Map<number, Point>());
   const pinch = useRef<{ distance: number; center: Point } | null>(null);
@@ -68,16 +70,24 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
 
   const screen = (point: number[]): Point => ({ x: (point[0] - focus.x) * scale + size.width / 2 + camera.x,
     y: (point[1] - focus.y) * scale + size.height / 2 + camera.y });
+  const smallCountries = countries.filter(country => 'small' in country && includeSet.has(country.id))
+    .map(country => ({ id: country.id, ...screen(anchors[country.id]) }));
   const eventPoint = (event: ReactPointerEvent) => {
     const rect = ref.current!.getBoundingClientRect();
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
-  const countryAt = (target: EventTarget) => (target as Element).closest('[data-country-id]')?.getAttribute('data-country-id') ?? null;
+  const countryAt = (event: ReactPointerEvent<SVGSVGElement>) => {
+    const element = (event.target as Element).closest('[data-country-id]');
+    // Found countries still win nearby overlaps, but no longer cast their own expanded hit area.
+    return element?.classList.contains('small-country')
+      ? nearestMarker(eventPoint(event), smallCountries)
+      : element?.getAttribute('data-country-id') ?? null;
+  };
 
   function hoverCountry(event: ReactPointerEvent<SVGSVGElement>) {
     // Capture can generate boundary events without a genuine new hover.
     if (pointers.current.size) return;
-    const id = countryAt(event.target);
+    const id = countryAt(event);
     // Only inspect an answer that already existed when this hover began.
     setHovered(previous => previous?.id === id ? previous : id ? { id, answer: answered.get(id) } : null);
   }
@@ -87,7 +97,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
     const point = eventPoint(event);
     pointers.current.set(event.pointerId, point);
     if (pointers.current.size === 1) {
-      gesture.current = { down: point, last: point, country: countryAt(event.target), moved: false };
+      gesture.current = { down: point, last: point, country: countryAt(event), moved: false };
       suppressClick.current = false;
     } else {
       suppressClick.current = true;
@@ -97,7 +107,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
     event.currentTarget.setPointerCapture(event.pointerId);
   }
   function pointerMove(event: ReactPointerEvent<SVGSVGElement>) {
-    if (!pointers.current.has(event.pointerId)) return;
+    if (!pointers.current.has(event.pointerId)) { hoverCountry(event); return; }
     const point = eventPoint(event);
     pointers.current.set(event.pointerId, point);
     if (pointers.current.size > 1) {
@@ -138,6 +148,8 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
     <svg ref={ref} className={`quiz-map${dragging ? ' is-dragging' : ''}`} data-map-surface
       viewBox={`0 0 ${size.width} ${size.height}`} aria-label="Interactive map of Asia"
       onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}
+      onFocus={event => setFocused((event.target as Element).closest('[data-country-id]')?.getAttribute('data-country-id') ?? null)}
+      onBlur={() => setFocused(null)}
       onPointerOver={hoverCountry} onPointerLeave={() => { if (!pointers.current.size) setHovered(null); }}>
       <defs>{labeledCountries.map(country => <clipPath id={`label-${country.id}`} key={country.id}><path d={country.path} /></clipPath>)}</defs>
       <g transform={`translate(${size.width / 2 + camera.x} ${size.height / 2 + camera.y}) scale(${scale}) translate(${-focus.x} ${-focus.y})`}>
@@ -148,7 +160,7 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
           return <path key={country.id} d={country.path ?? ''} data-country-id={country.id}
             className={`country ${active ? 'included' : 'excluded'}${answer ? ` answered${answer.assisted ? ' assisted' : ''}` : ''}${revealed === country.id ? ' revealed' : ''}${flash === country.id ? ' just-correct' : ''}${hovered?.id === country.id ? ' hovered' : ''}${wrong === country.id ? ' wrong' : ''}`}
             tabIndex={active && !answer ? 0 : -1} role="button" aria-label={countryName(country.id)} aria-disabled={!active || !!answer}
-            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onGuess(country.id); } }} />;
+            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (!event.repeat) onGuess(country.id); } }} />;
         })}
         {labeledCountries.map(country =>
           <text key={country.id} className="country-label" x={country.label.x} y={country.label.y}
@@ -156,13 +168,10 @@ export const QuizMap = memo(function QuizMap({ answers, included, revealed, flas
             clipPath={`url(#label-${country.id})`} aria-hidden="true">{countryName(country.id)}</text>)}
       </g>
       <g className="small-countries">
-        {countries.filter(country => 'small' in country && includeSet.has(country.id)).map(country => {
-          const point = screen(anchors[country.id]);
-          const answer = answered.get(country.id);
-          return <g key={country.id} data-country-id={country.id} className={`small-country${answer ? ' answered' : ''}${answer?.assisted ? ' assisted' : ''}${revealed === country.id ? ' revealed' : ''}${wrong === country.id ? ' wrong' : ''}`} transform={`translate(${point.x} ${point.y})`}>
+        {smallCountries.filter(country => !answered.has(country.id)).map(country =>
+          <g key={country.id} data-country-id={country.id} className={`small-country${hovered?.id === country.id ? ' hovered' : ''}${focused === country.id ? ' focused' : ''}${revealed === country.id ? ' revealed' : ''}${wrong === country.id ? ' wrong' : ''}`} transform={`translate(${country.x} ${country.y})`}>
             <circle className="small-hit" r="10" /><circle className="small-dot" r={camera.zoom > 3 ? 2 : 3.5} />
-          </g>;
-        })}
+          </g>)}
       </g>
     </svg>
     {hoveredAnswer && <div className="found-feedback" aria-label={countryName(hoveredAnswer)}>

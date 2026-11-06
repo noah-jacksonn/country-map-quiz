@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Check, ChevronRight, Clock3, History, Infinity as InfinityIcon, Palette, RotateCcw, Trash2, Volume2, VolumeX, X } from 'lucide-react';
 import { QuizMap } from './components/QuizMap';
@@ -13,8 +13,16 @@ import './App.css';
 
 function Modal({ title, onClose, children, className = '' }: { title: string; onClose: () => void; children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => { ref.current?.showModal(); }, []);
-  return <dialog ref={ref} className={`modal ${className}`} onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+  useLayoutEffect(() => {
+    const dialog = ref.current!;
+    const opener = document.activeElement;
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+    };
+  }, []);
+  return <dialog ref={ref} className={`modal ${className}`} aria-label={title} onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="modal-content">
       <div className="modal-heading"><h1>{title}</h1><button className="icon-button close-button" onClick={onClose} aria-label="Close" title="Close"><X size={20} /></button></div>
       {children}
@@ -23,6 +31,7 @@ function Modal({ title, onClose, children, className = '' }: { title: string; on
 }
 
 export default function App() {
+  const appRef = useRef<HTMLElement>(null);
   const [profile, setProfile] = useState(readProfile);
   const [historyCount, setHistoryCount] = useState(30);
   const [deletedAttempts, setDeletedAttempts] = useState<Attempt[]>([]);
@@ -42,7 +51,32 @@ export default function App() {
   const score = accuracy(game.answers.length, game.guesses);
   const currentMistakes = roundMistakes(game);
 
-  useEffect(() => { setTheme(mapTheme === 'paper' ? 'light' : 'dark'); }, [mapTheme, setTheme]);
+  useEffect(() => {
+    setTheme(mapTheme === 'paper' ? 'light' : 'dark');
+    if (appRef.current) {
+      const color = getComputedStyle(appRef.current).getPropertyValue('--ocean').trim();
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+    }
+  }, [mapTheme, setTheme]);
+  useEffect(() => {
+    function sync(event: StorageEvent) {
+      if (event.storageArea !== localStorage || (event.key !== STORAGE_KEY && event.key !== null)) return;
+      const latest = readProfile();
+      const current = profileRef.current;
+      if (latest.active.id !== current.active.id || latest.active.guesses !== current.active.guesses) {
+        clearTimeout(flashTimer.current); locked.current = false;
+        setFlash(null); setWrong(null);
+      }
+      if (latest.active.id !== current.active.id) setModal(null);
+      if (latest.history.length !== current.history.length || latest.history.some((attempt, index) => attempt.id !== current.history[index]?.id)) {
+        setDeletedAttempts([]);
+      }
+      profileRef.current = latest;
+      setProfile(latest);
+    }
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, []);
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(profile)); setStorageBlocked(false); }
     catch { setStorageBlocked(true); }
@@ -50,7 +84,8 @@ export default function App() {
   useEffect(() => {
     if (!game.started || game.mode === 'practice' || complete || modal) return;
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') setProfile(previous => ({ ...previous, active: { ...previous.active, elapsed: previous.active.elapsed + 1 } }));
+      // Only the focused window advances the shared round when several copies are open.
+      if (document.visibilityState === 'visible' && document.hasFocus()) setProfile(previous => ({ ...previous, active: { ...previous.active, elapsed: previous.active.elapsed + 1 } }));
     }, 1000);
     return () => clearInterval(interval);
   }, [game.started, game.mode, complete, modal]);
@@ -102,7 +137,7 @@ export default function App() {
     setDeletedAttempts([]);
   }
 
-  return <main className="app" data-theme={mapTheme}>
+  return <main ref={appRef} className="app" data-theme={mapTheme}>
     <QuizMap answers={game.answers} included={game.order} revealed={game.misses >= 3 ? target : null} flash={flash} onGuess={guess} wrong={wrong?.id ?? null} />
     <header className="game-toolbar">
       <div className="scoreboard surface" aria-label="Round progress">
@@ -127,11 +162,11 @@ export default function App() {
       </button>)}
     </div>
     <PointerPrompt country={flash ?? target ?? ''} misses={game.misses} correct={!!flash} hidden={!!modal || (complete && !flash)} />
-    {wrong && !modal && <div key={wrong.key} className="wrong-feedback" role="status" aria-live="polite">
+    {wrong && !modal && <div key={wrong.key} className="wrong-feedback" aria-hidden="true">
       <X className="wrong-feedback-icon" size={18} aria-hidden="true" />
       <span>That’s</span><span className="country-flag" aria-hidden="true">{countryFlag(wrong.id)}</span><strong>{countryName(wrong.id)}</strong>
     </div>}
-    <div className="sr-only" role="status" aria-live="polite">{flash ? `Correct. ${countryName(flash)}.` : complete ? 'Round complete.' : `${countryName(target)}.${game.misses >= 3 ? ' Follow the pulsing country.' : ''}`}</div>
+    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{flash ? `Correct. ${countryName(flash)}.` : complete ? 'Round complete.' : `${wrong ? `That’s ${countryName(wrong.id)}. ${game.misses} incorrect ${game.misses === 1 ? 'guess' : 'guesses'}. ` : ''}${countryName(target)}.${game.misses >= 3 ? ' Follow the pulsing country.' : ''}`}</div>
     {storageBlocked && <p className="storage-notice">Browser storage is unavailable. This round won’t be saved.</p>}
     {complete && !modal && <button className="finish-button surface" title="View round results" onClick={() => setModal('complete')}>Round complete <ChevronRight size={17} /></button>}
 
@@ -140,7 +175,7 @@ export default function App() {
       {profile.mistakes.length > 0 && <div className="practice-count"><strong>{profile.mistakes.length}</strong><span>{profile.mistakes.length === 1 ? 'country ready' : 'countries ready'}</span></div>}
       {profile.mistakes.length ? <><div className="country-list">{[...profile.mistakes].sort((a, b) => countryName(a).localeCompare(countryName(b))).map(id => <span key={id}>{countryName(id)}</span>)}</div>
         <button className="primary-button" title="Practice your mistakes without a timer or score" onClick={() => start('practice', profile.mistakes)}>Start practicing <ChevronRight size={17} /></button>
-      </> : <><button className="primary-button" title="Return to your current round" onClick={() => setModal(null)}>Back to the map <ChevronRight size={17} /></button></>}
+      </> : <button className="primary-button" title="Return to your current round" onClick={() => setModal(null)}>Back to the map <ChevronRight size={17} /></button>}
       {game.mode === 'practice' && <button className="text-button" title="Start a quiz with all 48 countries" onClick={() => start('quiz')}>Back to the full quiz</button>}
     </Modal>}
 
