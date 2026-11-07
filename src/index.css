@@ -61,3 +61,7 @@ button svg { flex-shrink: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+.about-link { position: fixed; left: 20px; bottom: 18px; z-index: 5; color: #a9c2ce; background: #102b3bd9; border-radius: 6px; padding: 3px 7px; font-size: 12px; text-decoration: none; }
+.about-link:hover { color: #fff; }
+.about-link:focus-visible { outline: 2px solid #b7dce5; outline-offset: 3px; }

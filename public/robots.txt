@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://country-map-quiz.gabledmarch8.chatgpt.site/sitemap.xml

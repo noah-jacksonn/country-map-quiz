@@ -1,6 +1,6 @@
 # Country map quiz
 
-A fullscreen, browser-local Asia quiz with the same 48-country selection as [Seterra's Asia quiz](https://www.geoguessr.com/vgp/3167).
+A fullscreen Asia geography game with 48 countries, mistake-focused practice, and progress saved in your browser.
 
 **[Play the game](https://country-map-quiz.gabledmarch8.chatgpt.site)**
 
@@ -40,3 +40,9 @@ Geography is public-domain [Natural Earth data redistributed by world-atlas](htt
 Cursor SVGs are copied unchanged from Harmony's landing-page `public/cursors` folder. Water uses the rounded arrow, countries use the pointing hand, and dragging uses the closed hand.
 
 The shared `@noah/segtest` package is included as a committed vendor archive. Vite provides its development-only `/api/debug/segtest` route and the app has a `next-themes` provider. No comparison is active. Follow `/Users/noahjackson/segtest/src/DebugSegtestPanel.tsx` when adding one.
+
+## Search and sharing
+
+The public site includes canonical URLs, search descriptions, social preview cards, WebApplication structured data, a sitemap, and a crawlable [how-to-play page](https://country-map-quiz.gabledmarch8.chatgpt.site/about.html). Submit `/sitemap.xml` in Google Search Console after verifying the site to monitor indexing; rankings and traffic are not guaranteed.
+
+The Asia logo is original generated artwork. Optimized delivery assets live in `public/`; the original and generation record are retained in the local image archive.
