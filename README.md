@@ -2,6 +2,8 @@
 
 A fullscreen, browser-local Asia quiz with the same 48-country selection as [Seterra's Asia quiz](https://www.geoguessr.com/vgp/3167).
 
+**[Play the game](https://country-map-quiz.gabledmarch8.chatgpt.site)**
+
 ![Asia country quiz in the Ocean theme, with found countries in green and a flag prompt for Pakistan](docs/images/gameplay.webp)
 
 ## Run
@@ -12,7 +14,7 @@ A fullscreen, browser-local Asia quiz with the same 48-country selection as [Set
 
 ## Hosting
 
-ChatGPT Sites hosts the static `dist/` build. `.openai/hosting.json` links this checkout to its Site. Publishing uses the Sites workflow to build, save the matching source revision, and deploy that revision. The Site starts private; its audience is managed separately in Sites.
+ChatGPT Sites hosts the static `dist/` build. `.openai/hosting.json` links this checkout to its Site. Publishing uses the Sites workflow to build, save the matching source revision, and deploy that revision. The game is publicly accessible; its audience is managed separately in Sites.
 
 Game data stays in the visitor's browser. Open tabs of the same site synchronize progress, history, and preferences; only the focused window advances the timer. Moving to a new hostname does not automatically copy history from localhost, and progress does not sync across devices. No hosted database or file-storage binding is required.
 
